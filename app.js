@@ -35,6 +35,7 @@ function setStep(next, scroll = true) {
   const info = stageInfo[step];
   $('#stage-intro').innerHTML = `<span class="question-mark">?</span><div><h2>${info[1]}</h2><p>${info[2]}</p>${step === 0 ? `<details class="first-thought"><summary>내 첫 생각 기록하기 ＋</summary>${field('reflection-before','저항을 지난 뒤 전류는 줄어들까요? 그렇게 생각한 이유는?','전하와 에너지에 대해 지금 내가 생각하는 것은…',2)}</details>` : ''}</div><span class="tag">${info[3]}</span>`;
   bindDrafts($('#stage-intro'));
+  renderPhilosophy();
   $('#lab-content').hidden = step > 1;
   $('#concept-cards').hidden = step !== 0;
   $('#inquiry-work').hidden = step !== 1;
@@ -49,6 +50,43 @@ function setStep(next, scroll = true) {
   if (step === 2) renderTransfer();
   if (step === 3) renderReflection();
   if (scroll) $('#stage-intro').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+const philosophyLabels = {
+  'philosophy-basis': '처음 생각의 근거',
+  'philosophy-claim': '검토할 주장과 경쟁 설명',
+  'philosophy-test': '두 설명을 구분할 관찰',
+  'philosophy-assumptions': '새 상황의 가정과 불일치 원인',
+  'philosophy-independent': '독립적인 검증과 수정 기준',
+  'philosophy-revision': '증거에 따른 생각의 수정',
+  'philosophy-certainty': '아직 확신할 수 없는 점'
+};
+function renderPhilosophy() {
+  const stages = [
+    {title:'관찰한 것과, 내가 해석한 것을 구분해요',
+     intro:'과학에서는 관찰 자료와 그 자료에 붙인 설명을 구분합니다. 설명에는 개념과 가정이 들어가므로, 같은 자료가 다른 설명과도 맞는지 따져 봐야 합니다.',
+     fields:field('philosophy-basis','내 첫 생각은 무엇에 근거하나요?','직접 본 일, 배운 모형, 비유, 직관 중 무엇인가요? 그 근거가 충분한가요?',2),
+     source:'오카샤의 과학적 추론과 플랑크의 물리적 세계상을 바탕으로 만든 활동입니다. 관찰과 해석의 구분이 관찰에 이론이 전혀 개입하지 않는다는 뜻은 아닙니다.'},
+    {title:'내 주장이 틀렸다면, 무엇이 달라져야 할까요?',
+     intro:'예측과 결과가 맞았다는 사실만으로 설명이 유일하게 옳아지는 것은 아닙니다. 경쟁하는 설명을 떠올리고, 두 설명이 서로 다른 결과를 예측하는 조건을 찾아보세요.',
+     fields:field('philosophy-claim','나의 주장과 경쟁하는 설명','예: “병렬 가지는 서로 독립적이다”와 “공통 저항 때문에 영향을 준다”는 설명은 어떤 조건에서 달라질까?',3)+field('philosophy-test','어떤 관찰이 두 설명을 구분할까요?','바꿀 변인, 그대로 둘 조건, 각 설명의 예측을 쓰세요. 내 주장을 수정할 결과도 미리 정하세요.',3),
+     source:'오카샤가 다룬 시험 가능한 예측과 설명의 검토를 회로 탐구에 적용했습니다. 단순한 결과 일치와 이론의 최종 증명을 구분합니다.'},
+    {title:'불일치가 생기면, 무엇부터 검토할까요?',
+     intro:'관찰이 예상과 다를 때에는 설명뿐 아니라 계측기, 보이지 않는 경로, 정상 상태라는 가정도 검토합니다. 그렇다고 어떤 결과든 변명으로 넘겨서는 안 됩니다. 반복 검증에서도 차이가 남는다면 모형을 수정할 기준이 필요합니다.',
+     fields:field('philosophy-assumptions','이 문제에서 유지하거나 바꿔야 할 가정은?','시스템 경계와 축적, 공통 저항, 측정 오차 중 어떤 조건이 중요한가요? 가능한 원인을 두 가지 비교해 보세요.',3)+field('philosophy-independent','어떻게 다시 확인하고, 언제 설명을 고칠까요?','다른 계측기나 독립적인 측정으로 무엇을 확인할까? 같은 차이가 반복되면 어떤 가정을 수정할까?',3),
+     source:'오카샤의 이론·보조 가정 검토와 플랑크의 사실 존중을 수업 활동으로 재구성했습니다. 원래 설명을 무조건 지키거나 첫 불일치에 곧바로 폐기하지 않도록 합니다.'},
+    {title:'확신의 크기보다, 믿는 이유를 점검해요',
+     intro:'좋은 과학적 설명은 어떤 증거가 뒷받침하고 무엇이 아직 검토되지 않았는지 밝힙니다. 시뮬레이션은 넣어 둔 법칙으로 계산하므로 실제 자연에서의 독립적인 검증을 대신할 수 없습니다.',
+     fields:field('philosophy-revision','어떤 증거 때문에 생각을 유지하거나 수정했나요?','처음의 주장 → 관찰 기록 → 지금의 설명 순서로 쓰세요. 다른 설명보다 더 타당하다고 생각한 이유도 적어 보세요.',3)+field('philosophy-certainty','아직 확신할 수 없는 점과 다음 검증은?','모형의 계산으로 확인한 것과 실제 측정이 필요한 것을 구분하세요. 생각을 다시 바꾸게 할 증거는 무엇인가요?',3),
+     source:'플랑크의 신념과 사실 존중, 오카샤의 과학적 추론을 개념 기반 탐구의 성찰과 연결한 적용안입니다. 책의 직접 인용이나 자동 채점 기준이 아닙니다.'}
+  ];
+  const item=stages[step];
+  $('#philosophy-work').innerHTML=`<article class="philosophy-panel"><span class="section-kicker">과학철학으로 생각하기 · 0${step+1}</span><h2>${item.title}</h2><p>${item.intro}</p>${step===0?`<form id="thought-check" class="thought-check"><fieldset><legend>다음 예시에서 화면을 관찰한 기록에 가장 가까운 문장은?</legend><div class="choice-list"><label><input type="radio" name="thought-kind" value="observation" required>화면의 I₂ 표시값이 0.86 A이다.</label><label><input type="radio" name="thought-kind" value="explanation">전하가 소모되지 않기 때문에 전류 관계가 유지된다.</label><label><input type="radio" name="thought-kind" value="proof">이 시뮬레이션 하나로 모든 실제 회로에서도 법칙이 참임을 증명했다.</label></div></fieldset><button class="secondary" type="submit">관찰과 해석 비교하기 →</button><div id="thought-feedback" aria-live="polite"></div></form>`:''}<div class="philosophy-fields">${item.fields}</div><p class="philosophy-source">${item.source}</p><p class="save-hint">생각의 기록은 기기에 저장되며 탐구 노트와 내려받기에 함께 담깁니다.</p></article>`;
+  bindDrafts($('#philosophy-work'));
+  $('#thought-check')?.addEventListener('submit', e=>{
+    e.preventDefault();const choice=new FormData(e.target).get('thought-kind');
+    $('#thought-feedback').className='feedback';
+    $('#thought-feedback').innerHTML=`<strong>${choice==='observation'?'표시값을 읽은 기록을 골랐어요.':'관찰 자료와 그 자료에 대한 설명을 나눠 볼까요?'}</strong><p>첫 문장은 화면에 표시된 값을 읽은 기록입니다. 두 번째는 보존 개념을 사용한 설명입니다. 세 번째는 한 모형의 계산에서 모든 실제 회로로 결론을 넓힌 주장으로, 이 기록만으로 뒷받침할 수 없습니다. 화면의 값 역시 모형이 계산한 자료이며 실제 전류계의 독립적인 측정과는 구분해야 합니다.</p>`;
+  });
 }
 function particles(path, color, current, count = 5) {
   if (current < .000001) return '';
@@ -102,7 +140,7 @@ function potentialChart(changes) {
   const xs = [22, 145, 265, 388];
   const points = levels.map((v,i) => `${xs[i]},${y(v)}`).join(' ');
   const labels = reverse ? ['출발 B','가지 저항 역방향','R₁ 역방향','전지 + → −'] : ['출발 B','전지 − → +','R₁ 통과','가지 저항 통과'];
-  return `<div class="potential-chart"><svg viewBox="0 0 415 103" role="img" aria-label="선택한 고리를 따라 변하는 전위. 출발과 도착의 전위는 같습니다."><line x1="22" x2="388" y1="${y(0)}" y2="${y(0)}" stroke="#c8d5bd" stroke-dasharray="3 4"/><polyline points="${points}" fill="none" stroke="#71915e" stroke-width="2"/>${levels.map((v,i)=>`<circle cx="${xs[i]}" cy="${y(v)}" r="3" fill="#71915e"/><text x="${xs[i]}" y="${y(v)-8}" text-anchor="middle" font-size="9" fill="#718362">${fmt(v,1)} V</text><text x="${xs[i]}" y="91" text-anchor="${i === 0 ? 'start' : i === 3 ? 'end' : 'middle'}" font-size="8" fill="#94a187">${labels[i]}</text>`).join('')}</svg><p>전위 경로도 · 점 사이의 선은 변화를 연결한 안내선입니다.</p></div>`;
+  return `<div class="potential-chart"><svg viewBox="0 0 415 103" role="img" aria-label="선택한 고리를 따라 변하는 전위. 출발과 도착의 전위는 같습니다."><line x1="22" x2="388" y1="${y(0)}" y2="${y(0)}" stroke="#c8d5bd" stroke-dasharray="3 4"/><polyline points="${points}" fill="none" stroke="#71915e" stroke-width="2"/>${levels.map((v,i)=>`<circle cx="${xs[i]}" cy="${y(v)}" r="3" fill="#71915e"/><text x="${xs[i]}" y="${y(v)-8}" text-anchor="middle" font-size="14" fill="#536b44">${fmt(v,1)} V</text><text x="${xs[i]}" y="91" text-anchor="${i === 0 ? 'start' : i === 3 ? 'end' : 'middle'}" font-size="12" fill="#5f7450">${labels[i]}</text>`).join('')}</svg><p>전위 경로도 · 점 사이의 선은 변화를 연결한 안내선입니다.</p></div>`;
 }
 function renderReadout(s) {
   if (law === 'current') {
@@ -160,6 +198,8 @@ function openRecord() {
 function updateCount() { $('#note-count').textContent=notes.length; }
 function renderNotebook() {
   $('#notebook-view').innerHTML=`<div class="view-heading"><div class="eyebrow"><span></span> MY INQUIRY NOTE</div><h1>관찰이 모이면, 설명이 됩니다.</h1><p>서로 다른 조건의 결과를 나란히 비교해 보세요. ${storageOK?'이 브라우저에만 저장되며, 다른 기기와 동기화되지 않습니다.':'현재 기기 저장을 사용할 수 없습니다. 내려받기로 보관하세요.'}</p></div>${notes.length?`<div class="table-scroll panel"><table><caption class="subtle" style="padding:13px;text-align:left">관찰 기록 ${notes.length}개 · 소수 둘째 자리까지 표시, 식은 반올림 전 값으로 계산합니다.</caption><thead><tr><th>기록</th><th>전압</th><th>R₁ / R₂ / R₃</th><th>스위치</th><th>I₁</th><th>I₂</th><th>I₃</th><th>가지 전압</th></tr></thead><tbody>${notes.map((n,i)=>`<tr><td>#${i+1}</td><td>${n.circuit.voltage} V</td><td>${n.circuit.r1} / ${n.circuit.r2} / ${n.circuit.r3} Ω</td><td>${n.circuit.closed?'닫힘':'열림'}</td><td>${fmt(n.result.i1)} A</td><td>${fmt(n.result.i2)} A</td><td>${fmt(n.result.i3)} A</td><td>${fmt(n.result.branchVoltage)} V</td></tr>`).join('')}</tbody></table></div><div class="notebook-actions"><button class="primary" id="download-notes">전체 기록 내려받기 ↓</button><button class="secondary" id="continue-inquiry">회로로 돌아가기 →</button></div>${notes.map((n,i)=>`<article class="note-card"><h3>관찰 #${i+1}<button data-delete="${i}" aria-label="관찰 ${i+1} 삭제">삭제 ×</button></h3><small>예측</small><p>${escapeHTML(n.prediction||'예측을 작성하지 않았어요.')}</p><small>관찰과 설명</small><p>${escapeHTML(n.observation||'설명을 작성하지 않았어요.')}</p></article>`).join('')}`:`<div class="empty-state"><div class="empty-icon">▤</div><h2>첫 번째 발견을 기다리고 있어요.</h2><p>회로의 조건을 바꾸고 ‘현재 결과 기록하기’를 눌러 보세요.<br>예측과 결과를 함께 남기면 생각의 변화가 보입니다.</p><button class="primary" id="continue-inquiry">탐구 실험실로 가기 →</button></div>`}<article class="content-panel"><h3>내가 만든 일반화</h3><p style="white-space:pre-wrap">${escapeHTML(drafts.generalization||'탐구하기에서 관찰을 연결한 나의 설명을 작성해 보세요.')}</p><div class="inline-actions"><button class="secondary" id="notebook-reflect">성찰 이어 쓰기 →</button></div></article>`;
+  const philosophyEntries=Object.entries(philosophyLabels).filter(([id])=>drafts[id]);
+  if(philosophyEntries.length) $('#notebook-view').insertAdjacentHTML('beforeend', `<article class="content-panel"><span class="section-kicker">과학철학으로 생각한 기록</span><h2>내 설명은 무엇에 근거하나요?</h2>${philosophyEntries.map(([id,label])=>`<h3>${label}</h3><p style="white-space:pre-wrap;overflow-wrap:anywhere">${escapeHTML(drafts[id])}</p>`).join('')}</article>`);
   $('#continue-inquiry').addEventListener('click',()=>{setView('lesson');setStep(1);});
   $('#notebook-reflect').addEventListener('click',()=>setStep(3));
   $('#download-notes')?.addEventListener('click',exportNotes);
@@ -169,7 +209,7 @@ function exportNotes() {
   const lines=['# 사이언 · 키르히호프 탐구 노트','', '학습용 정상 직류 모형의 계산 결과입니다. 실제 측정 자료가 아닙니다.',''];
   notes.forEach((n,i)=>lines.push(`## 관찰 #${i+1}`,`전압 ${n.circuit.voltage} V; R₁=${n.circuit.r1} Ω, R₂=${n.circuit.r2} Ω, R₃=${n.circuit.r3} Ω; 스위치 ${n.circuit.closed?'닫힘':'열림'}`,`I₁=${fmt(n.result.i1,4)} A, I₂=${fmt(n.result.i2,4)} A, I₃=${fmt(n.result.i3,4)} A; 가지 전압=${fmt(n.result.branchVoltage,4)} V`,`예측: ${n.prediction||'미작성'}`,`관찰과 설명: ${n.observation||'미작성'}`,''));
   const names={prediction:'탐구 전 예측',generalization:'나의 일반화',falsification:'예측을 수정할 관찰','transfer-generalization':'전이 후 일반화','reflection-before':'처음의 생각','reflection-after':'지금의 설명과 증거','reflection-limits':'모형의 한계','reflection-next':'다음 질문'};
-  Object.entries(drafts).forEach(([key,value])=>{if(typeof value==='string')lines.push(`## ${names[key]||key}`,value,'');else if(value&&typeof value==='object')lines.push(`## ${key}`,`선택: ${value.chosen+1}`,`이유: ${value.reason}`,'');});
+  Object.entries(drafts).forEach(([key,value])=>{if(typeof value==='string')lines.push(`## ${philosophyLabels[key]||names[key]||key}`,value,'');else if(value&&typeof value==='object')lines.push(`## ${key}`,`선택: ${value.chosen+1}`,`이유: ${value.reason}`,'');});
   const url=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/markdown;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='사이언_키르히호프_탐구노트.md';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('탐구 노트를 파일로 내려받았어요.');
 }
 function renderGuide() {

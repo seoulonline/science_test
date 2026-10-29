@@ -26,6 +26,11 @@ with sync_playwright() as p:
     page.locator('.first-thought summary').click()
     page.locator('#reflection-before').fill('처음에는 저항에서 전류가 줄어든다고 생각했다.')
     page.locator('.first-thought summary').click()
+    assert page.locator('.hero p').evaluate('e => parseFloat(getComputedStyle(e).fontSize)') >= 17
+    page.locator('input[name="thought-kind"][value="proof"]').check()
+    page.locator('#thought-check button').click()
+    expect(page.locator('#thought-feedback')).to_contain_text('실제 전류계')
+    page.locator('#philosophy-basis').fill('밝기가 줄면 전류도 줄 것이라는 직관에 근거했다.')
     page.screenshot(path=str(SHOTS/'desktop.png'), full_page=True)
     passed('개념 화면·초기 회로·데스크톱 레이아웃')
 
@@ -50,6 +55,8 @@ with sync_playwright() as p:
     passed('슬라이더 키보드 조작·개방 가지·고리 선택·역방향·초기화')
 
     page.locator('[data-step="1"]').click()
+    page.locator('#philosophy-claim').fill('공통 저항이 가지 사이의 상호작용을 만든다는 설명을 검토한다.')
+    page.locator('#philosophy-test').fill('R₂만 바꾸고 I₃의 변화로 두 설명을 구별한다.')
     page.locator('#prediction').fill('R₂를 늘리면 I₃는 증가할 것이다.')
     page.locator('#generalization').fill('정상 상태에서 전하는 분기점에 쌓이지 않는다.')
     for preset in ['base','r2','open']:
@@ -70,6 +77,8 @@ with sync_playwright() as p:
     download = info.value
     text = Path(download.path()).read_text()
     assert '관찰 #3' in text and '정상 상태에서 전하는' in text
+    assert '검토할 주장과 경쟁 설명' in text and 'R₂만 바꾸고 I₃' in text
+    expect(page.locator('#notebook-view')).to_contain_text('공통 저항이 가지 사이의 상호작용')
     passed('세 조건 기록·예측 연결·입력 이스케이프·새로고침 저장·파일 다운로드')
 
     page.locator('[data-view="lesson"]').click()
@@ -91,11 +100,17 @@ with sync_playwright() as p:
     page.locator('#guide-start').click()
     passed('세 전이 문제·설명 피드백·성찰 보존·출처와 수업 안내')
 
+    page.locator('[data-step="1"]').click()
+    expect(page.locator('#philosophy-test')).to_have_value('R₂만 바꾸고 I₃의 변화로 두 설명을 구별한다.')
     for width in [390,768,1024]:
         page.set_viewport_size({'width':width,'height':844})
         page.locator('[data-step="0"]').click()
         assert not page.evaluate('document.documentElement.scrollWidth > innerWidth'), f'overflow at {width}'
         expect(page.locator('#record')).to_be_visible()
+        assert page.locator('.law-explainer').evaluate('e => parseFloat(getComputedStyle(e).fontSize)') >= 16
+        page.locator('[data-step="2"]').click()
+        assert not page.evaluate('document.documentElement.scrollWidth > innerWidth'), f'transfer overflow at {width}'
+        page.locator('[data-step="0"]').click()
         page.evaluate("document.documentElement.style.scrollBehavior='auto'; window.scrollTo({top:0,behavior:'instant'}); document.querySelector('#toast').classList.remove('show')")
         page.screenshot(path=str(SHOTS/f'width-{width}.png'),full_page=True)
     passed('390·768·1024px 반응형 레이아웃')

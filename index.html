@@ -30,12 +30,13 @@
       <section class="hero"><div><div class="eyebrow"><span></span> CONCEPT LAB <b>01</b></div><h1>갈라지는 전류,<br class="mobile-break"> 사라지지 않는 것.</h1><p>회로 속 작은 변화를 따라, 보존이라는 큰 생각을 발견해 보세요.</p></div><div class="hero-note"><span>오늘의 개념 렌즈</span><strong>시스템과 보존</strong><div>전하 <i>·</i> 에너지 <i>·</i> 상호작용</div></div></section>
       <nav class="steps" aria-label="탐구 단계"><button data-step="0" class="active" aria-current="step"><span>01</span> 개념 만나기 <small>무엇을 알고 있나요?</small></button><button data-step="1"><span>02</span> 탐구하기 <small>예측하고 확인해요</small></button><button data-step="2"><span>03</span> 전이하기 <small>다른 상황에 적용해요</small></button><button data-step="3"><span>04</span> 성찰하기 <small>생각의 변화를 기록해요</small></button></nav>
       <section id="stage-intro" class="question-banner"></section>
+      <section id="philosophy-work" aria-label="과학철학으로 생각하기"></section>
       <div id="lab-content">
         <div class="lab-grid">
           <section class="panel circuit-panel" aria-labelledby="circuit-title">
             <div class="panel-header"><div><span class="section-index">LIVE SIMULATION</span><h2 id="circuit-title">눈으로 따라가는 전류의 흐름</h2></div><button id="play" class="icon-button" aria-label="전류 애니메이션 일시정지">Ⅱ</button></div>
             <div class="circuit-toolbar"><div class="segmented" aria-label="관찰할 법칙"><button class="active" data-law="current" aria-pressed="true">전하의 흐름</button><button data-law="voltage" aria-pressed="false">에너지의 변화</button></div><span class="live-pill"><i></i> 정상 상태 DC</span></div>
-            <div id="diagram" class="diagram"></div>
+            <p class="diagram-hint">↔ 회로를 좌우로 밀어 큰 글씨로 살펴보세요.</p><div id="diagram" class="diagram" tabindex="0" role="region" aria-label="회로도, 작은 화면에서는 좌우로 스크롤할 수 있습니다"></div>
             <div class="diagram-legend"><span><i class="dot green"></i> 전체 전류 I₁</span><span><i class="dot violet"></i> 가지 전류 I₂</span><span><i class="dot orange"></i> 가지 전류 I₃</span><span class="legend-tip">점은 전류의 방향을 나타내는 표상</span></div>
             <div id="law-readout" class="law-readout" aria-live="polite"></div>
             <div class="circuit-foot"><span>ⓘ</span><p>이상적인 전지·도선·저항 모형입니다. 점은 관습적 전류 방향이며, 실제 전자의 이동 속도나 개수를 나타내지 않습니다.</p></div>
