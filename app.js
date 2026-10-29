@@ -1,8 +1,10 @@
 import { solve, loopChanges } from './physics.js';
+import { initializeSidebar } from './sidebar.js';
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const defaults = { voltage: 12, r1: 4, r2: 6, r3: 6, closed: true };
 let circuit = { ...defaults }, step = 0, view = 'lesson', law = 'current', branch = 'r2', reverse = false;
+let dimension = '2d', scene3D = null, scenePromise = null;
 let playing = !matchMedia('(prefers-reduced-motion: reduce)').matches;
 let notes = [], drafts = {}, storageOK = true, pendingRecord = null, transferCase = 0;
 try { const saved = JSON.parse(localStorage.getItem('saien-lab-v1') || '{}'); notes = Array.isArray(saved.notes) ? saved.notes : []; drafts = saved.drafts || {}; } catch { storageOK = false; }
@@ -21,6 +23,7 @@ function setView(next) {
   $$('.side-link').forEach(el => { const active = el.dataset.view === view; el.classList.toggle('selected', active); if (active) el.setAttribute('aria-current','page'); else el.removeAttribute('aria-current'); });
   if (view === 'notebook') renderNotebook();
   if (view === 'guide') renderGuide();
+  syncSceneActivity();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 const stageInfo = [
@@ -49,6 +52,7 @@ function setStep(next, scroll = true) {
   if (step === 1) renderInquiry();
   if (step === 2) renderTransfer();
   if (step === 3) renderReflection();
+  syncSceneActivity();
   if (scroll) $('#stage-intro').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 const philosophyLabels = {
@@ -163,6 +167,41 @@ function update() {
   $('#switch-label').textContent = circuit.closed ? '회로가 연결되어 있어요' : '이 가지에는 전류가 흐르지 않아요';
   $('#play').textContent = playing ? 'Ⅱ' : '▷'; $('#play').setAttribute('aria-label', playing ? '전류 애니메이션 일시정지' : '전류 애니메이션 재생');
   renderDiagram(s); renderReadout(s);
+  scene3D?.update(circuit, s, { playing, law, branch });
+}
+function syncSceneActivity() {
+  scene3D?.setActive(dimension === '3d' && view === 'lesson' && step <= 1);
+}
+async function setDimension(next) {
+  dimension = next;
+  $$('[data-dimension]').forEach(button => {
+    const selected = button.dataset.dimension === dimension;
+    button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected));
+  });
+  $('#diagram').hidden = dimension !== '2d';
+  $('.diagram-hint').hidden = dimension !== '2d';
+  $('#scene-3d').hidden = dimension !== '3d';
+  $('#scene-explanation').hidden = dimension !== '3d';
+  $('#reset-camera').hidden = dimension !== '3d';
+  if (dimension === '2d') { syncSceneActivity(); return; }
+  $('#scene-status').textContent = scene3D ? '' : '입체 회로를 준비하고 있어요…';
+  try {
+    if (!scenePromise) scenePromise = import('./circuit-3d.js').then(module => {
+      scene3D = module.createCircuit3D($('#scene-viewport'), () => {
+        setDimension('2d'); scene3D?.dispose(); scene3D = null; scenePromise = null;
+        $('[data-dimension="3d"]').disabled = true; $('[data-dimension="3d"]').title = '새로고침 후 다시 시도할 수 있습니다.';
+        toast('3D 화면 연결이 중단되어 2D로 전환했어요. 페이지를 새로고침하면 3D를 다시 시도할 수 있습니다.');
+      });
+      return scene3D;
+    });
+    await scenePromise;
+    $('#scene-status').textContent = '';
+    scene3D.update(circuit, solve(circuit), { playing, law, branch });
+    syncSceneActivity();
+  } catch {
+    scene3D?.dispose(); scene3D = null; scenePromise = null; $('#scene-viewport').replaceChildren();
+    if (dimension === '3d') { setDimension('2d'); toast('이 브라우저에서 3D를 시작하지 못했어요. 2D에서 탐구를 계속할 수 있습니다.'); }
+  }
 }
 function renderInquiry() {
   $('#inquiry-work').innerHTML = `<div class="section-heading"><h2>숫자를 넘어, 나의 설명 만들기</h2><span>관계 맺기 → 조사하기 → 조직하기 → 일반화하기</span></div><div class="work-grid"><article class="content-panel"><span class="section-kicker">01 · PREDICT & TEST</span><h2>먼저 예측하고, 하나만 바꿔요</h2><p>R₁ = 4 Ω, R₂ = R₃ = 6 Ω에서 시작합니다. R₂만 12 Ω으로 늘리면 I₃는 어떻게 달라질까요? 예상과 그 이유를 먼저 적어 보세요.</p>${field('prediction','나의 예측과 이유','I₃는 늘어날까, 줄어들까, 그대로일까? 그 이유는…',3)}<p class="subtle">이 예측은 회로 결과를 기록할 때 함께 가져옵니다.</p><div class="experiment-recipes"><button data-preset="base">① 기본 회로</button><button data-preset="r2">② R₂만 12 Ω</button><button data-preset="open">③ R₃ 가지 열기</button></div><p class="save-hint">세 조건의 결과를 위 회로에서 각각 기록하고 비교해 보세요.</p></article><article class="content-panel"><span class="section-kicker">02 · CONNECT & EXPLAIN</span><h2>변한 것과, 변하지 않은 것</h2><p>전류의 값이 바뀌어도 성립하는 관계는 무엇인가요? 기록한 두 가지 이상의 사례를 근거로 설명하세요.</p>${field('generalization','나의 일반화','“정상 상태의 회로에서 … 왜냐하면 …”',3)}<details><summary class="text-button">생각을 돕는 질문 열기 ＋</summary><p>분기점에서 전하가 계속 쌓인다면 정상 상태일까요? 전류와 에너지 중 저항에서 전환되는 것은 무엇인가요? 공통 저항이 없다면 가지 간 영향도 같을까요?</p></details><button class="secondary" id="compare-notes" style="margin-top:17px">관찰 기록 비교하기 ↗</button></article></div><article class="content-panel"><span class="section-kicker">PHILOSOPHY OF SCIENCE</span><h2>시뮬레이션과 맞으면, 자연에서도 참일까요?</h2><p>이 프로그램은 옴의 법칙과 보존 법칙을 사용해 값을 계산합니다. 결과의 일치는 모형 안의 관계를 보여 주지만, 자연에서 법칙이 참이라는 독립적인 실험 증거는 아닙니다. 실제 전지와 전류계로도 같은 경향이 나타나는지 확인해야 합니다.</p>${field('falsification','내 예측을 수정하게 만들 관찰은?','어떤 측정 결과가 나오면 예측을 바꿀까? 측정 오차·전지 내부 저항도 어떻게 확인할까?',2)}<p class="subtle">오카샤의 과학적 추론, 플랑크의 모형과 사실 존중을 바탕으로 만든 수업 활동입니다. 책의 직접 인용이 아닙니다.</p></article>`;
@@ -229,4 +268,10 @@ $$('[data-law]').forEach(el=>el.addEventListener('click',()=>{law=el.dataset.law
 $('#record').addEventListener('click',openRecord);
 ['close-dialog','cancel-record'].forEach(id=>$(`#${id}`).addEventListener('click',()=>$('#record-dialog').close()));
 $('#record-form').addEventListener('submit',e=>{e.preventDefault();if(!pendingRecord)return;notes.push({...pendingRecord,prediction:$('#record-prediction').value.trim(),observation:$('#record-observation').value.trim()});const saved=persist();pendingRecord=null;updateCount();$('#record-dialog').close();toast(saved ? `관찰 #${notes.length}을 탐구 노트에 저장했어요.` : '기기 저장을 사용할 수 없어 현재 화면에만 기록했어요. 파일로 내려받아 주세요.');});
+initializeSidebar(toast);
+$$('[data-dimension]').forEach(button => button.addEventListener('click', () => setDimension(button.dataset.dimension)));
+$('#reset-camera').addEventListener('click', () => scene3D?.resetCamera());
+$('#camera-zoom-in').addEventListener('click', () => scene3D?.zoom(.9));
+$('#camera-zoom-out').addEventListener('click', () => scene3D?.zoom(1.1));
+$('#camera-top').addEventListener('click', () => scene3D?.top());
 setStep(0,false);update();updateCount();
