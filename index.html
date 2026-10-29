@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='12' fill='%23edf1e7'/%3E%3Ctext x='12' y='37' font-family='Georgia' font-style='italic' font-size='40' fill='%2327765a'%3Es%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#f7f8f4">
+  <meta name="description" content="예측하고, 회로를 바꾸고, 증거로 설명하는 키르히호프 법칙 탐구 실험실">
+  <title>사이언 — 키르히호프 탐구실</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+<aside class="sidebar">
+  <a class="brand" href="./" aria-label="사이언 처음으로"><span class="brand-symbol">s<span>·</span></span><span>사이언<small>생각과 발견 사이</small></span></a>
+  <div class="side-label">나의 탐구 공간</div>
+  <button class="side-link selected" data-view="lesson"><span class="nav-icon">⌘</span> 탐구 실험실 <span class="nav-arrow">↗</span></button>
+  <button class="side-link" data-view="notebook"><span class="nav-icon">▤</span> 나의 탐구 노트 <span id="note-count" class="count">0</span></button>
+  <button class="side-link" data-view="guide"><span class="nav-icon">▧</span> 수업 안내와 자료</button>
+  <div class="side-divider"></div>
+  <div class="side-label">지금 탐구하는 주제</div>
+  <div class="topic"><span class="topic-line"></span><div>전자기학<small>01. 키르히호프의 법칙</small></div></div>
+  <div class="sidebar-bottom"><div class="small-orbit">✳</div><strong>공식 너머의 발견</strong><p>정답을 찾기 전에,<br>나만의 질문을 만들어 보세요.</p><span class="side-tag">CONCEPT → INQUIRY → TRANSFER</span></div>
+  <div class="profile"><span class="avatar">S</span><div>오늘도, 탐구하는 나<small>학생 탐구 공간 · 기기에 저장</small></div></div>
+</aside>
+<div class="workspace">
+  <header class="topbar"><div class="breadcrumb">물리 탐구 <span>/</span> 전자기학 <span>/</span> <strong>키르히호프의 법칙</strong></div><button class="quiet" id="open-guide">수업 가이드 <span>↗</span></button></header>
+  <main id="main" tabindex="-1">
+    <div id="lesson-view">
+      <section class="hero"><div><div class="eyebrow"><span></span> CONCEPT LAB <b>01</b></div><h1>갈라지는 전류,<br class="mobile-break"> 사라지지 않는 것.</h1><p>회로 속 작은 변화를 따라, 보존이라는 큰 생각을 발견해 보세요.</p></div><div class="hero-note"><span>오늘의 개념 렌즈</span><strong>시스템과 보존</strong><div>전하 <i>·</i> 에너지 <i>·</i> 상호작용</div></div></section>
+      <nav class="steps" aria-label="탐구 단계"><button data-step="0" class="active" aria-current="step"><span>01</span> 개념 만나기 <small>무엇을 알고 있나요?</small></button><button data-step="1"><span>02</span> 탐구하기 <small>예측하고 확인해요</small></button><button data-step="2"><span>03</span> 전이하기 <small>다른 상황에 적용해요</small></button><button data-step="3"><span>04</span> 성찰하기 <small>생각의 변화를 기록해요</small></button></nav>
+      <section id="stage-intro" class="question-banner"></section>
+      <div id="lab-content">
+        <div class="lab-grid">
+          <section class="panel circuit-panel" aria-labelledby="circuit-title">
+            <div class="panel-header"><div><span class="section-index">LIVE SIMULATION</span><h2 id="circuit-title">눈으로 따라가는 전류의 흐름</h2></div><button id="play" class="icon-button" aria-label="전류 애니메이션 일시정지">Ⅱ</button></div>
+            <div class="circuit-toolbar"><div class="segmented" aria-label="관찰할 법칙"><button class="active" data-law="current" aria-pressed="true">전하의 흐름</button><button data-law="voltage" aria-pressed="false">에너지의 변화</button></div><span class="live-pill"><i></i> 정상 상태 DC</span></div>
+            <div id="diagram" class="diagram"></div>
+            <div class="diagram-legend"><span><i class="dot green"></i> 전체 전류 I₁</span><span><i class="dot violet"></i> 가지 전류 I₂</span><span><i class="dot orange"></i> 가지 전류 I₃</span><span class="legend-tip">점은 전류의 방향을 나타내는 표상</span></div>
+            <div id="law-readout" class="law-readout" aria-live="polite"></div>
+            <div class="circuit-foot"><span>ⓘ</span><p>이상적인 전지·도선·저항 모형입니다. 점은 관습적 전류 방향이며, 실제 전자의 이동 속도나 개수를 나타내지 않습니다.</p></div>
+          </section>
+          <aside class="panel controls" aria-labelledby="controls-title"><div class="panel-header"><div><span class="section-index">MAKE A CHANGE</span><h2 id="controls-title">회로를 바꿔 보세요</h2></div><button id="reset" class="icon-button" aria-label="회로 초기화" title="회로 초기화">↺</button></div>
+            <div class="control-group"><label for="voltage"><span class="control-icon">ϟ</span> 전지의 전압 <output id="voltage-out" for="voltage"></output></label><input id="voltage" type="range" min="2" max="24" step="1" value="12"><div class="range-ends"><span>2 V</span><span>24 V</span></div></div>
+            <div class="control-divider"></div><div class="resistor-label">저항 <span>한 번에 하나씩 바꿔 보세요</span></div>
+            <div class="control-group"><label for="r1"><span class="r-badge green">R₁</span> 공통 저항 <output id="r1-out" for="r1"></output></label><input id="r1" type="range" min="1" max="20" value="4"><div class="range-ends"><span>1 Ω</span><span>20 Ω</span></div></div>
+            <div class="control-group"><label for="r2"><span class="r-badge violet">R₂</span> 첫 번째 가지 <output id="r2-out" for="r2"></output></label><input id="r2" class="violet-range" type="range" min="1" max="20" value="6"><div class="range-ends"><span>1 Ω</span><span>20 Ω</span></div></div>
+            <div class="control-group"><label for="r3"><span class="r-badge orange">R₃</span> 두 번째 가지 <output id="r3-out" for="r3"></output></label><input id="r3" class="orange-range" type="range" min="1" max="20" value="6"><div class="range-ends"><span>1 Ω</span><span>20 Ω</span></div></div>
+            <div class="switch-row"><div><strong>두 번째 가지 스위치</strong><small id="switch-label">회로가 연결되어 있어요</small></div><button id="switch" role="switch" aria-checked="true" aria-label="두 번째 가지 연결"><span></span></button></div>
+            <button id="record" class="primary record-button"><span>＋</span> 현재 결과 기록하기 <span>↗</span></button><p class="control-note">예측과 관찰을 탐구 노트에 모아 보세요.</p>
+          </aside>
+        </div>
+        <section id="concept-cards" class="concept-section"><div class="section-heading"><h2>공식보다 먼저, 개념을 연결해요</h2><span>작은 관찰에서 큰 생각으로</span></div><div class="concept-grid">
+          <article class="concept-card"><div class="concept-card-top"><span class="concept-icon green">⊙</span><span>01 / CHARGE</span></div><h3>전하는 사라질까요?</h3><p>전류는 단위 시간에 흐르는 전하량입니다. 저항에서 전달되는 것은 에너지이지, 전하가 소모되는 것은 아닙니다.</p><div class="concept-formula">I = ΔQ / Δt <small>1 A = 1 C/s</small></div></article>
+          <article class="concept-card"><div class="concept-card-top"><span class="concept-icon violet">ϟ</span><span>02 / ENERGY</span></div><h3>전압은 무엇을 말할까요?</h3><p>전위차는 전하 1 C당 에너지의 차이입니다. 전지는 에너지를 공급하고 저항은 전기 에너지를 다른 형태로 전환합니다.</p><div class="concept-formula">ΔV = ΔU / q <small>1 V = 1 J/C</small></div></article>
+          <article class="concept-card"><div class="concept-card-top"><span class="concept-icon orange">⇄</span><span>03 / SYSTEM</span></div><h3>하나를 바꾸면 어떻게 될까요?</h3><p>가지 하나의 저항을 바꾸면 다른 가지도 영향을 받을까요? 연결 구조와 공통 저항에 주목해 예측해 보세요.</p><button class="text-button" id="begin-inquiry">내 예측으로 탐구 시작하기 <span>→</span></button></article>
+        </div></section>
+        <section id="inquiry-work" hidden></section>
+      </div>
+      <section id="transfer-work" hidden></section>
+      <section id="reflection-work" hidden></section>
+      <div class="bottom-nav"><span id="stage-caption">01 / 04 · 개념 만나기</span><button id="next-stage" class="primary">예측하고 탐구하기 <span>→</span></button></div>
+    </div>
+    <section id="notebook-view" hidden></section>
+    <section id="guide-view" hidden></section>
+    <footer><span class="footer-brand">사이언 <i>·</i> 생각과 발견 사이</span><span>질문에서 시작해, 나의 언어로 이해하는 과학.</span></footer>
+  </main>
+</div>
+<div id="toast" class="toast" role="status"></div>
+<dialog id="record-dialog"><form id="record-form"><div class="dialog-top"><span class="section-index">MY INQUIRY NOTE</span><button type="button" id="close-dialog" class="icon-button" aria-label="닫기">×</button></div><h2>관찰을 증거로 남겨요</h2><p id="record-summary"></p><label for="record-prediction">바꾸기 전에 어떤 결과를 예상했나요?</label><textarea id="record-prediction" rows="2" placeholder="예: R₂를 늘리면 I₂는 줄어들 것이다."></textarea><label for="record-observation">예측과 관찰을 비교해 설명해 보세요.</label><textarea id="record-observation" rows="3" placeholder="전하·에너지·상호작용 중 어떤 개념과 연결되나요?"></textarea><div class="dialog-actions"><button type="button" id="cancel-record" class="secondary">취소</button><button type="submit" class="primary">탐구 노트에 저장 →</button></div></form></dialog>
+</body></html>
