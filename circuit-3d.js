@@ -1,7 +1,7 @@
 import * as THREE from './vendor/three/three.module.min.js';
 
 /** A spatial representation of the same ideal DC model, not a field solver. */
-export function createCircuit3D(container, onContextLost) {
+export function createCircuit3D(container, onContextLost, onBatteryInspect) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setClearColor(0xf0f3eb);
@@ -15,7 +15,7 @@ export function createCircuit3D(container, onContextLost) {
   const target = new THREE.Vector3(0, .4, 0);
   const home = { theta: -.2, phi: .61, distance: 17.8 };
   let orbit = { ...home }, active = false, visible = true, playing = false, raf = 0, lastTime = 0, time = 0;
-  let latestResult = null;
+  let latestResult = null, batteryFocused = false;
   scene.add(new THREE.HemisphereLight(0xffffff, 0x7c8e76, 2.4));
   const sun = new THREE.DirectionalLight(0xffffff, 3);
   sun.position.set(-4, 10, 6); sun.castShadow = true;
@@ -57,6 +57,17 @@ export function createCircuit3D(container, onContextLost) {
   const battery=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,1.8,32),material(0x416d62));
   battery.rotation.x=Math.PI/2;battery.position.set(-5,y,0);battery.castShadow=true;scene.add(battery);
   rod([-5,y,-.9],[-5,y,-1.06],.22,mats.contact);
+  const batteryInside=new THREE.Group();batteryInside.position.set(-5,y,0);batteryInside.visible=false;scene.add(batteryInside);
+  const insideMaterial=material(0xc49b55);
+  function insideBox(size,position,mat) {
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(...size),mat);mesh.position.set(...position);batteryInside.add(mesh);return mesh;
+  }
+  const internalResistor=insideBox([.27,.28,.45],[0,0,-.38],insideMaterial);
+  insideBox([.38,.4,.045],[0,0,.3],mats.common);
+  insideBox([.25,.22,.045],[0,0,.48],mats.common);
+  rod([0,0,-.9],[0,0,.3],.025,mats.common,batteryInside);
+  rod([0,0,.48],[0,0,.9],.025,mats.common,batteryInside);
+
   const terminals=[];
   for(const z of [1.1,2.1]) {
     const contact=new THREE.Mesh(new THREE.SphereGeometry(.105,12,8),mats.contact);contact.position.set(5,y,z);scene.add(contact);terminals.push(contact);
@@ -72,11 +83,14 @@ export function createCircuit3D(container, onContextLost) {
   arrow([-3.6,y,-2.5],[1,0,0],mats.common);arrow([1,y,-1.4],[0,0,1],mats.r2);const arrow3=arrow([3.2,y,-2.5],[1,0,0],mats.r3);
   const labels={};
   function label(key,position) {
-    const node=document.createElement('span');node.className='scene-label';node.setAttribute('aria-hidden','true');
+    const interactive=key==='battery'||key==='internal';
+    const node=document.createElement(interactive?'button':'span');node.className='scene-label';
+    if(interactive){node.type='button';node.classList.add('scene-battery-action');node.addEventListener('click',e=>{e.stopPropagation();onBatteryInspect?.();});node.setAttribute('aria-controls','battery-inspector');}
+    else node.setAttribute('aria-hidden','true');
     if(key==='a'||key==='b')node.classList.add('scene-node-label');
     container.append(node);labels[key]={node,position:new THREE.Vector3(...position)};
   }
-  label('battery',[-5,1.5,.1]);label('r1',[-2,1.5,-2.6]);
+  label('battery',[-5,1.5,.35]);label('internal',[-5,1.8,-1.55]);label('r1',[-2,1.5,-2.6]);
   label('r2',[1,1.6,-.1]);label('r3',[5,1.6,-.1]);
   label('a',[1,.9,-3.3]);label('b',[1,.9,3.3]);label('switch',[4.8,1,3.25]);
   label('plus',[-5,.8,-1.35]);label('minus',[-5,.8,1.35]);
@@ -120,7 +134,7 @@ export function createCircuit3D(container, onContextLost) {
       const half=Math.min(node.offsetWidth/2+5,width/2);
       node.style.left=`${THREE.MathUtils.clamp((screen.x*.5+.5)*width,half,width-half)}px`;
       node.style.top=`${THREE.MathUtils.clamp((-screen.y*.5+.5)*height,20,height-20)}px`;
-      node.hidden=screen.z>1;
+      node.hidden=screen.z>1||(node===labels.internal.node&&!batteryInside.visible)||(batteryFocused&&!['battery','internal','plus','minus'].some(key=>labels[key].node===node));
     }
   }
   function frame(now) {
@@ -141,21 +155,28 @@ export function createCircuit3D(container, onContextLost) {
   const resizeObserver=new ResizeObserver(resize);resizeObserver.observe(container);
   const observer=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;schedule();});observer.observe(container);
   document.addEventListener('visibilitychange',schedule);
-  const pointers=new Map();let pinch=0;
-  container.addEventListener('pointerdown',e=>{if(e.button!==0)return;container.focus({preventScroll:true});pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});container.setPointerCapture(e.pointerId);});
+  const pointers=new Map();let pinch=0,pointerStart=null;
+  const raycaster=new THREE.Raycaster();
+  container.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;pointerStart={x:e.clientX,y:e.clientY};container.focus({preventScroll:true});pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});container.setPointerCapture(e.pointerId);});
   container.addEventListener('pointermove',e=>{
     const previous=pointers.get(e.pointerId);if(!previous)return;
     pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(pointers.size===2){const[a,b]=[...pointers.values()];const gap=Math.hypot(a.x-b.x,a.y-b.y);if(pinch)orbit.distance=THREE.MathUtils.clamp(orbit.distance*pinch/gap,10,30);pinch=gap;}
+    if(pointers.size===2){const[a,b]=[...pointers.values()];const gap=Math.hypot(a.x-b.x,a.y-b.y);if(pinch)orbit.distance=THREE.MathUtils.clamp(orbit.distance*pinch/gap,6,30);pinch=gap;}
     else {orbit.theta-=(e.clientX-previous.x)*.006;orbit.phi=THREE.MathUtils.clamp(orbit.phi+(e.clientY-previous.y)*.006,.07,1.35);}
     cameraUpdate();paint();
   });
-  function release(e){pointers.delete(e.pointerId);pinch=0;}
+  function release(e){
+    if(e.type==='pointerup'&&pointers.has(e.pointerId)&&pointers.size===1&&pointerStart&&Math.hypot(e.clientX-pointerStart.x,e.clientY-pointerStart.y)<5){
+      const rect=container.getBoundingClientRect();raycaster.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1),camera);
+      if(raycaster.intersectObjects([battery,internalResistor],false).length)onBatteryInspect?.();
+    }
+    pointers.delete(e.pointerId);pinch=0;
+  }
   container.addEventListener('pointerup',release);container.addEventListener('pointercancel',release);container.addEventListener('lostpointercapture',release);
-  function zoom(factor){orbit.distance=THREE.MathUtils.clamp(orbit.distance*factor,10,30);cameraUpdate();paint();}
+  function zoom(factor){orbit.distance=THREE.MathUtils.clamp(orbit.distance*factor,6,30);cameraUpdate();paint();}
   container.addEventListener('wheel',e=>{e.preventDefault();zoom(Math.exp(Math.sign(e.deltaY)*.08));},{passive:false});
   container.addEventListener('keydown',e=>{
-    const actions={ArrowLeft:()=>orbit.theta-=.12,ArrowRight:()=>orbit.theta+=.12,ArrowUp:()=>orbit.phi= Math.max(.07,orbit.phi-.1),ArrowDown:()=>orbit.phi=Math.min(1.35,orbit.phi+.1),'+':()=>zoom(.9),'=':()=>zoom(.9),'-':()=>zoom(1.1),Home:()=>{orbit={...home};}};
+    const actions={ArrowLeft:()=>orbit.theta-=.12,ArrowRight:()=>orbit.theta+=.12,ArrowUp:()=>orbit.phi= Math.max(.07,orbit.phi-.1),ArrowDown:()=>orbit.phi=Math.min(1.35,orbit.phi+.1),'+':()=>zoom(.9),'=':()=>zoom(.9),'-':()=>zoom(1.1),Home:()=>{orbit={...home};target.set(0,.4,0);batteryFocused=false;}};
     if(actions[e.key]){e.preventDefault();actions[e.key]();cameraUpdate();paint();}
   });
   renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();active=false;schedule();onContextLost?.();});
@@ -164,7 +185,17 @@ export function createCircuit3D(container, onContextLost) {
     update(state,result,options={}) {
       latestResult=result;playing=options.playing;
       const f=n=>n.toFixed(2);
-      write('battery',`${state.voltage} V  − → +`);
+      write('battery',`ε ${state.voltage} V · V ${f(result.terminalVoltage)} V`);
+      write('internal',`내부 r = ${state.internalR ?? 0} Ω`,'#92602f');
+      batteryInside.visible=Boolean(options.batteryOpen);
+      labels.battery.position.set(...(options.batteryOpen?[-3.3,1.3,1.25]:[-5,1.5,.35]));
+      if(!options.batteryOpen&&batteryFocused){target.set(0,.4,0);orbit={...home};batteryFocused=false;cameraUpdate();}
+      battery.material.transparent=Boolean(options.batteryOpen);battery.material.opacity=options.batteryOpen?.16:1;
+      battery.material.depthWrite=!options.batteryOpen;battery.material.needsUpdate=true;battery.castShadow=!options.batteryOpen;
+      labels.battery.node.setAttribute('aria-label','배터리 내부 등가 모형 살펴보기');
+      labels.internal.node.setAttribute('aria-label','내부 저항 살펴보기');
+      labels.battery.node.setAttribute('aria-expanded',String(Boolean(options.batteryOpen)));
+      container.dataset.batteryOpen=String(Boolean(options.batteryOpen));
       write('r1',`R₁ ${state.r1} Ω · I₁ ${f(result.i1)} A`);
       write('r2',`R₂ ${state.r2} Ω · I₂ ${f(result.i2)} A`,'#725b98');
       write('r3',`R₃ ${state.r3} Ω · I₃ ${f(result.i3)} A`,'#92602f');
@@ -182,8 +213,9 @@ export function createCircuit3D(container, onContextLost) {
       container.dataset.playing=String(playing);schedule();
     },
     setActive(value){active=value;if(active)resize();schedule();},
-    resetCamera(){orbit={...home};cameraUpdate();paint();},
-    top(){orbit={theta:0,phi:.07,distance:17.8};cameraUpdate();paint();},
+    resetCamera(){orbit={...home};target.set(0,.4,0);batteryFocused=false;cameraUpdate();paint();},
+    focusBattery(){target.set(-4.6,.45,0);orbit={theta:-.4,phi:.7,distance:6.5};batteryFocused=true;cameraUpdate();paint();},
+    top(){orbit={theta:0,phi:.07,distance:17.8};target.set(0,.4,0);batteryFocused=false;cameraUpdate();paint();},
     zoom,
     dispose(){active=false;schedule();resizeObserver.disconnect();observer.disconnect();document.removeEventListener('visibilitychange',schedule);scene.traverse(o=>{o.geometry?.dispose();if(o.material){for(const m of [o.material].flat()){m.map?.dispose();m.dispose();}}});renderer.dispose();container.replaceChildren();}
   };
